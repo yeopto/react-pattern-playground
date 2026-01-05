@@ -1,0 +1,62 @@
+---
+description: 코딩 스타일 및 컨벤션
+alwaysApply: false
+globs:
+  - "src/**/*.ts"
+  - "src/**/*.tsx"
+  - "*.config.ts"
+---
+
+# 코딩 스타일 가이드
+
+## 명명 규칙
+
+- 컴포넌트: PascalCase (예: `MonacoEditor.tsx`)
+- 유틸/훅: camelCase (예: `useDebounce.ts`)
+- 타입/인터페이스: PascalCase (예: `Pattern`, `UserProgress`)
+- 상수: UPPER_SNAKE_CASE (예: `MAX_PATTERNS`)
+
+## 파일 구조
+
+```
+src/
+├── components/       # React 컴포넌트
+├── pages/           # 페이지 컴포넌트
+├── store/           # Zustand 스토어
+├── data/            # 패턴 데이터
+├── utils/           # 유틸리티 함수
+├── hooks/           # 커스텀 훅
+└── types/           # TypeScript 타입
+```
+
+## Import/Export 규칙
+
+- 컴포넌트: `export default`
+- 유틸, 타입: `named export`
+- Import 순서: 외부 라이브러리 → 내부 모듈 → 타입 → 스타일
+
+## 코드 스타일
+
+- 함수형 컴포넌트 + hooks 사용
+- Props는 interface로 명시적 정의
+- 조건부 렌더링 시 early return 활용
+- 복잡한 로직은 주석 추가
+- 명확하고 설명적인 변수명 사용
+
+## 커밋 컨벤션
+
+```
+feat: 새로운 기능
+fix: 버그 수정
+test: 테스트 추가/수정
+refactor: 리팩토링
+docs: 문서 수정
+style: 코드 포맷팅
+chore: 빌드, 설정 변경
+```
+
+## ESLint & Prettier
+
+- ESLint 에러 0개 유지
+- Prettier로 자동 포맷팅
+- TypeScript strict 모드 활성화

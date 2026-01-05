@@ -1,0 +1,248 @@
+---
+description: Zustand 상태 관리 규칙
+alwaysApply: false
+globs:
+  - "src/store/**/*.ts"
+  - "**/*Store.ts"
+  - "**/*store.ts"
+---
+
+# 상태 관리 가이드
+
+## Zustand Store 기본 구조
+
+```typescript
+import { create } from "zustand";
+
+interface StoreState {
+  // State
+  data: string;
+  isLoading: boolean;
+
+  // Actions
+  setData: (data: string) => void;
+  reset: () => void;
+}
+
+export const useStore = create<StoreState>((set, get) => ({
+  // Initial State
+  data: "",
+  isLoading: false,
+
+  // Actions
+  setData: (data) => set({ data }),
+
+  reset: () =>
+    set({
+      data: "",
+      isLoading: false,
+    }),
+}));
+```
+
+## 프로젝트 Store 구조
+
+### 1. useProgressStore (학습 진도 관리)
+
+```typescript
+interface ProgressState {
+  progress: UserProgress[];
+
+  saveProgress: (patternId: string, userCode: string) => void;
+  markCompleted: (patternId: string) => void;
+  getProgress: (patternId: string) => UserProgress | undefined;
+  loadFromLocalStorage: () => void;
+  saveToLocalStorage: () => void;
+}
+```
+
+**책임**:
+
+- 패턴별 학습 진도 저장
+- 완료 상태 관리
+- LocalStorage 동기화
+
+### 2. useEditorStore (에디터 상태)
+
+```typescript
+interface EditorState {
+  currentCode: string;
+  showAnswer: boolean;
+
+  setCurrentCode: (code: string) => void;
+  toggleAnswer: () => void;
+  resetCode: (initialCode: string) => void;
+}
+```
+
+**책임**:
+
+- 현재 작성 중인 코드
+- 정답 표시 여부
+- 에디터 리셋
+
+## LocalStorage 연동 패턴
+
+### 저장
+
+```typescript
+saveToLocalStorage: () => {
+  const state = get();
+  localStorage.setItem("rpp_progress", JSON.stringify(state.progress));
+};
+```
+
+### 불러오기
+
+```typescript
+loadFromLocalStorage: () => {
+  try {
+    const saved = localStorage.getItem("rpp_progress");
+    if (saved) {
+      set({ progress: JSON.parse(saved) });
+    }
+  } catch (error) {
+    console.error("Failed to load from localStorage:", error);
+  }
+};
+```
+
+### 자동 저장 (디바운스)
+
+```typescript
+// useDebounce hook 활용
+const debouncedCode = useDebounce(code, 1000);
+
+useEffect(() => {
+  if (debouncedCode) {
+    saveProgress(patternId, debouncedCode);
+  }
+}, [debouncedCode]);
+```
+
+## Store 사용 패턴
+
+### 전체 store 가져오기 (지양)
+
+```typescript
+// ❌ 나쁜 예 - 불필요한 리렌더링
+const store = useProgressStore();
+```
+
+### 필요한 것만 선택 (권장)
+
+```typescript
+// ✅ 좋은 예
+const { progress, saveProgress } = useProgressStore();
+```
+
+### Selector 사용
+
+```typescript
+// 특정 값만 구독
+const completedCount = useProgressStore(
+  (state) => state.progress.filter((p) => p.completed).length
+);
+```
+
+## 상태 업데이트 패턴
+
+### 단순 업데이트
+
+```typescript
+setData: (data) => set({ data });
+```
+
+### 이전 상태 기반 업데이트
+
+```typescript
+increment: () => set((state) => ({ count: state.count + 1 }));
+```
+
+### 배열 업데이트 (불변성 유지)
+
+```typescript
+addItem: (item) =>
+  set((state) => ({
+    items: [...state.items, item],
+  }));
+
+updateItem: (id, updates) =>
+  set((state) => ({
+    items: state.items.map((item) =>
+      item.id === id ? { ...item, ...updates } : item
+    ),
+  }));
+
+removeItem: (id) =>
+  set((state) => ({
+    items: state.items.filter((item) => item.id !== id),
+  }));
+```
+
+## 비동기 액션 (필요시)
+
+```typescript
+fetchData: async () => {
+  set({ isLoading: true, error: null });
+
+  try {
+    const data = await api.fetchData();
+    set({ data, isLoading: false });
+  } catch (error) {
+    set({
+      error: error.message,
+      isLoading: false,
+    });
+  }
+};
+```
+
+## Store 초기화
+
+```typescript
+// App.tsx 또는 최상위에서
+useEffect(() => {
+  useProgressStore.getState().loadFromLocalStorage();
+}, []);
+```
+
+## 디버깅
+
+```typescript
+// Zustand devtools (개발 중)
+import { devtools } from "zustand/middleware";
+
+export const useStore = create<StoreState>()(
+  devtools(
+    (set, get) => ({
+      // ...
+    }),
+    { name: "ProgressStore" }
+  )
+);
+```
+
+## 테스트
+
+```typescript
+import { renderHook, act } from "@testing-library/react";
+import { useProgressStore } from "./useProgressStore";
+
+describe("useProgressStore", () => {
+  beforeEach(() => {
+    // 테스트 전 초기화
+    useProgressStore.setState({ progress: [] });
+  });
+
+  it("should save progress", () => {
+    const { result } = renderHook(() => useProgressStore());
+
+    act(() => {
+      result.current.saveProgress("pattern-1", "code");
+    });
+
+    expect(result.current.progress).toHaveLength(1);
+  });
+});
+```

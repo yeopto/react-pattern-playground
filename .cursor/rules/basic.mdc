@@ -1,0 +1,48 @@
+---
+description: 프로젝트 기본 정보 (항상 적용)
+alwaysApply: true
+---
+
+# React Pattern Playground
+
+## 프로젝트 정보
+
+- React 디자인 패턴 학습 플랫폼
+- 전체 계획: @prd.md
+- 작업 목록: @task-list.md
+
+## 기술 스택
+
+- React 18 + TypeScript
+- Vite, Zustand, Emotion
+- Monaco Editor + Babel Standalone
+
+## 핵심 원칙
+
+- **모든 기능에 테스트 코드 작성 필수**
+- TypeScript strict 모드 사용
+- 사용자 친화적인 에러 메시지
+- 데스크톱 환경 최적화 (모바일 미지원)
+
+## 🎯 작업별 규칙 가이드
+
+### 새로운 기능 개발 시
+
+1. @task-list.md 에서 작업 확인
+2. @.cursor/rules/coding-style.mdc - 코딩 스타일 준수
+3. @.cursor/rules/component-patterns.mdc - 컴포넌트 작성 (React 컴포넌트인 경우)
+4. @.cursor/rules/testing.mdc - 테스트 코드 작성 (필수)
+
+### 상태 관리 작업 시
+
+- @.cursor/rules/state-management.mdc - Zustand store 패턴
+- @.cursor/rules/testing.mdc - Store 테스트
+
+### 코드 실행 시스템 작업 시
+
+- @.cursor/rules/code-execution.mdc - 동적 코드 실행 가이드
+- @.cursor/rules/testing.mdc - 실행 로직 테스트
+
+### 테스트만 작성 시
+
+- @.cursor/rules/testing.mdc - 테스트 패턴 및 커버리지

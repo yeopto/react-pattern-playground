@@ -1,0 +1,317 @@
+---
+description: 동적 코드 실행 시스템 가이드
+alwaysApply: false
+globs:
+  - "src/utils/codeExecutor.ts"
+  - "src/utils/executeCode.ts"
+  - "src/hooks/useCodeExecution.ts"
+  - "src/components/Editor/**"
+  - "src/components/Preview/**"
+---
+
+# 동적 코드 실행 시스템
+
+## 실행 흐름
+
+```
+사용자 코드 (string)
+    ↓
+Babel 변환 (JSX → JavaScript)
+    ↓
+new Function() (동적 컴포넌트 생성)
+    ↓
+ErrorBoundary (에러 캐치)
+    ↓
+렌더링 or 에러 표시
+```
+
+## 코드 실행 구현
+
+### 1. Babel 변환
+
+```typescript
+import { transform } from "@babel/standalone";
+
+const transformed = transform(code, {
+  presets: ["react", "typescript"],
+  filename: "component.tsx",
+}).code;
+```
+
+### 2. React API 주입
+
+```typescript
+const fullCode = `
+  // React hooks 및 API 주입
+  const { 
+    useState, 
+    useEffect, 
+    useContext, 
+    createContext, 
+    useMemo, 
+    useCallback, 
+    memo, 
+    Fragment 
+  } = React;
+  
+  ${transformedCode}
+  
+  // 컴포넌트 반환
+  return Component;
+`;
+```
+
+### 3. 동적 함수 생성
+
+```typescript
+const ComponentFunction = new Function("React", fullCode);
+const Component = ComponentFunction(React);
+```
+
+### 4. 렌더링
+
+```typescript
+<ErrorBoundary>
+  <Component />
+</ErrorBoundary>
+```
+
+## 에러 처리 3단계
+
+### 1단계: 변환 에러 (Babel)
+
+```typescript
+try {
+  const transformed = transform(code, {
+    presets: ["react", "typescript"],
+  }).code;
+} catch (error) {
+  return {
+    success: false,
+    error: "문법 에러: JSX 문법을 확인해주세요.",
+  };
+}
+```
+
+### 2단계: 타입 에러 (Monaco Editor)
+
+- Monaco Editor가 자동으로 TypeScript 에러 표시
+- 빨간 밑줄로 실시간 피드백
+
+### 3단계: 런타임 에러 (ErrorBoundary)
+
+```typescript
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <ErrorDisplay error={this.state.error} />;
+    }
+    return this.props.children;
+  }
+}
+```
+
+## ExecutionResult 타입
+
+```typescript
+export interface ExecutionResult {
+  success: boolean;
+  component?: React.ComponentType;
+  error?: string;
+}
+```
+
+## 코드 실행 유틸 함수 구조
+
+```typescript
+export function executeCode(code: string): ExecutionResult {
+  // 1. 빈 코드 체크
+  if (!code.trim()) {
+    return {
+      success: false,
+      error: "코드를 작성해주세요.",
+    };
+  }
+
+  // 2. Component export 체크
+  if (
+    !code.includes("export default") &&
+    !code.includes("function Component")
+  ) {
+    return {
+      success: false,
+      error: "Component를 export 해주세요.",
+    };
+  }
+
+  try {
+    // 3. Babel 변환
+    const transformed = transform(code, {
+      presets: ["react", "typescript"],
+      filename: "component.tsx",
+    }).code;
+
+    if (!transformed) {
+      throw new Error("코드 변환에 실패했습니다.");
+    }
+
+    // 4. React API 주입 및 함수 생성
+    const fullCode = `
+      const { useState, useEffect, /* ... */ } = React;
+      ${transformed}
+      return Component;
+    `;
+
+    const ComponentFunction = new Function("React", fullCode);
+    const Component = ComponentFunction(React);
+
+    return {
+      success: true,
+      component: Component,
+    };
+  } catch (error) {
+    // 5. 친절한 에러 메시지
+    let errorMessage = "알 수 없는 에러가 발생했습니다.";
+
+    if (error instanceof Error) {
+      if (error.message.includes("Unexpected token")) {
+        errorMessage = "문법 에러: JSX 문법을 확인해주세요.";
+      } else if (error.message.includes("is not defined")) {
+        errorMessage = "변수가 정의되지 않았습니다: " + error.message;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+```
+
+## CodePreview 컴포넌트 패턴
+
+```typescript
+export default function CodePreview({ code }: { code: string }) {
+  const [result, setResult] = useState<ExecutionResult | null>(null);
+
+  useEffect(() => {
+    // 약간의 딜레이로 UI 블로킹 방지
+    const timer = setTimeout(() => {
+      const executionResult = executeCode(code);
+      setResult(executionResult);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [code]);
+
+  // 빈 상태
+  if (!code.trim()) {
+    return <EmptyDisplay>코드를 작성해주세요</EmptyDisplay>;
+  }
+
+  // 에러 상태
+  if (!result?.success || !result.component) {
+    return <ErrorDisplay>{result?.error}</ErrorDisplay>;
+  }
+
+  // 정상 렌더링
+  const Component = result.component;
+  return (
+    <PreviewContainer>
+      <ErrorBoundary>
+        <Component />
+      </ErrorBoundary>
+    </PreviewContainer>
+  );
+}
+```
+
+## 제약 사항 및 보안
+
+### 제약 사항
+
+- 외부 라이브러리 import 불가
+- 파일 시스템 접근 불가
+- 네트워크 요청 제한
+
+### 보안 고려사항
+
+- 현재: new Function() 사용 (eval 대신)
+- 신뢰할 수 있는 로컬 코드만 실행
+- iframe 격리는 필요시 추가 가능
+
+## 디버깅
+
+### console.log
+
+- 브라우저 개발자 도구 콘솔에 출력
+- CodePreview에서는 보이지 않음
+
+### 에러 메시지
+
+- 변환 에러: 즉시 표시
+- 런타임 에러: ErrorBoundary가 캐치하여 표시
+
+## 성능 최적화
+
+### 디바운스
+
+```typescript
+const debouncedCode = useDebounce(code, 1000);
+
+useEffect(() => {
+  const result = executeCode(debouncedCode);
+  setResult(result);
+}, [debouncedCode]);
+```
+
+### 메모이제이션
+
+```typescript
+const Component = useMemo(() => {
+  const result = executeCode(code);
+  return result.component;
+}, [code]);
+```
+
+## 테스트 예시
+
+```typescript
+describe("executeCode", () => {
+  it("should transform and execute valid code", () => {
+    const code = `
+      export default function Component() {
+        return <div>Hello</div>;
+      }
+    `;
+
+    const result = executeCode(code);
+    expect(result.success).toBe(true);
+    expect(result.component).toBeDefined();
+  });
+
+  it("should handle syntax errors", () => {
+    const code = "<div>unclosed";
+    const result = executeCode(code);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("문법 에러");
+  });
+
+  it("should handle empty code", () => {
+    const result = executeCode("");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("코드를 작성해주세요");
+  });
+});
+```

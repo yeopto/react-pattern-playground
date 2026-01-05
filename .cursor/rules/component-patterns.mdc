@@ -1,0 +1,190 @@
+---
+description: React 컴포넌트 작성 패턴
+alwaysApply: false
+globs:
+  - "src/components/**/*.tsx"
+  - "src/pages/**/*.tsx"
+---
+
+# 컴포넌트 작성 패턴
+
+## 기본 구조
+
+```typescript
+import { useState } from "react";
+import styled from "@emotion/styled";
+
+// 1. Props 타입 정의
+interface ComponentProps {
+  title: string;
+  onAction?: () => void;
+}
+
+// 2. Styled Components
+const Container = styled.div`
+  display: flex;
+  padding: 16px;
+`;
+
+const Title = styled.h2`
+  color: #e5e7eb;
+  font-size: 18px;
+`;
+
+// 3. 컴포넌트
+export default function Component({ title, onAction }: ComponentProps) {
+  // 3-1. Hooks
+  const [state, setState] = useState("");
+
+  // 3-2. Handlers
+  const handleClick = () => {
+    if (onAction) onAction();
+  };
+
+  // 3-3. Early return (조건부)
+  if (!title) return null;
+
+  // 3-4. Render
+  return (
+    <Container>
+      <Title>{title}</Title>
+    </Container>
+  );
+}
+```
+
+## Emotion 스타일링 규칙
+
+### 컬러 팔레트 (PRD 기준)
+
+```typescript
+const colors = {
+  primary: "#3B82F6", // Blue
+  secondary: "#8B5CF6", // Purple
+  success: "#10B981", // Green
+  warning: "#F59E0B", // Orange
+  error: "#EF4444", // Red
+  background: "#1E1E1E", // Dark
+  surface: "#2A2A2A", // Lighter Dark
+  border: "#333333", // Border
+  text: "#E5E7EB", // Light Gray
+  textSecondary: "#9CA3AF", // Gray
+};
+```
+
+### 스타일 작성 원칙
+
+- Styled Components 방식 사용
+- 직접 색상 지정 (theme 없이)
+- 반응형: Desktop First (768px 이하 대응)
+- 일관된 spacing (4px, 8px, 12px, 16px, 24px)
+
+## 컴포넌트 분류
+
+### Page 컴포넌트 (`src/pages/`)
+
+- 라우트 단위
+- Layout으로 감싸기
+- 페이지별 데이터 로딩
+- 예: `HomePage.tsx`, `PatternPage.tsx`
+
+### Layout 컴포넌트 (`src/components/Layout/`)
+
+- 공통 레이아웃
+- Header, Footer, Sidebar 등
+- 예: `Layout.tsx`, `Header.tsx`
+
+### Feature 컴포넌트 (`src/components/[Feature]/`)
+
+- 기능별 그룹화
+- 예: `Editor/MonacoEditor.tsx`, `Pattern/PatternCard.tsx`
+
+## Props 패턴
+
+### Optional Props
+
+```typescript
+interface Props {
+  required: string;
+  optional?: number;
+}
+
+function Component({ required, optional = 0 }: Props) {
+  // ...
+}
+```
+
+### Children Props
+
+```typescript
+interface Props {
+  children: React.ReactNode;
+}
+
+function Container({ children }: Props) {
+  return <div>{children}</div>;
+}
+```
+
+### Event Handler Props
+
+```typescript
+interface Props {
+  onAction: () => void;
+  onChange: (value: string) => void;
+}
+```
+
+## 상태 관리
+
+### 로컬 상태 (useState)
+
+- 컴포넌트 내부에서만 사용
+- 폼 입력, UI 토글 등
+
+### 전역 상태 (Zustand)
+
+- 여러 컴포넌트에서 공유
+- 학습 진도, 에디터 상태 등
+
+```typescript
+import { useProgressStore } from "../store/useProgressStore";
+
+function Component() {
+  const { progress, saveProgress } = useProgressStore();
+  // 사용
+}
+```
+
+## Hooks 사용 순서
+
+1. Context hooks (useContext)
+2. State hooks (useState)
+3. Custom hooks
+4. Zustand store hooks
+5. Effect hooks (useEffect)
+
+## 조건부 렌더링
+
+### Early Return (권장)
+
+```typescript
+function Component({ data }) {
+  if (!data) return null;
+  if (error) return <Error />;
+
+  return <Content data={data} />;
+}
+```
+
+### 조건부 JSX
+
+```typescript
+return (
+  <div>
+    {isLoading && <Loading />}
+    {error && <Error message={error} />}
+    {data && <Content data={data} />}
+  </div>
+);
+```

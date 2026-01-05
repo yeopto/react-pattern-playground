@@ -1,0 +1,132 @@
+---
+description: 테스트 코드 작성 규칙
+alwaysApply: false
+globs:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "src/**/__tests__/**"
+---
+
+# 테스트 작성 가이드
+
+## 테스트 원칙
+
+- **모든 새 기능은 테스트 코드와 함께 작성**
+- 테스트 우선 개발(TDD) 권장
+- Given-When-Then 패턴 사용
+
+## 테스트 도구
+
+- **Vitest**: 단위 테스트
+- **React Testing Library**: 컴포넌트 테스트
+
+## 테스트 커버리지 목표
+
+- 유틸 함수: 90%+
+- Store (Zustand): 80%+
+- 컴포넌트: 70%+
+
+## 테스트 파일 위치
+
+- 같은 폴더에 `[filename].test.ts` 또는 `[filename].test.tsx`
+- 예: `codeExecutor.ts` → `codeExecutor.test.ts`
+
+## 테스트 작성 패턴
+
+### 유틸 함수 테스트
+
+```typescript
+import { describe, it, expect } from "vitest";
+import { functionName } from "./fileName";
+
+describe("functionName", () => {
+  it("should [예상 동작]", () => {
+    // Arrange (준비)
+    const input = "test";
+
+    // Act (실행)
+    const result = functionName(input);
+
+    // Assert (검증)
+    expect(result).toBe("expected");
+  });
+
+  it("should handle edge cases", () => {
+    expect(() => functionName(null)).toThrow();
+  });
+});
+```
+
+### 컴포넌트 테스트
+
+```typescript
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import ComponentName from "./ComponentName";
+
+describe("ComponentName", () => {
+  it("should render with props", () => {
+    render(<ComponentName title="Test" />);
+    expect(screen.getByText("Test")).toBeInTheDocument();
+  });
+
+  it("should handle user interaction", () => {
+    const onAction = vi.fn();
+    render(<ComponentName onAction={onAction} />);
+
+    fireEvent.click(screen.getByRole("button"));
+    expect(onAction).toHaveBeenCalled();
+  });
+});
+```
+
+### Store 테스트
+
+```typescript
+import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, beforeEach } from "vitest";
+import { useStore } from "./useStore";
+
+describe("useStore", () => {
+  beforeEach(() => {
+    // 각 테스트 전 스토어 초기화
+    useStore.setState({ data: initialValue });
+  });
+
+  it("should update state", () => {
+    const { result } = renderHook(() => useStore());
+
+    act(() => {
+      result.current.updateData("new value");
+    });
+
+    expect(result.current.data).toBe("new value");
+  });
+});
+```
+
+## 테스트 실행
+
+```bash
+# 전체 테스트
+npm test
+
+# 특정 파일
+npm test codeExecutor.test.ts
+
+# watch 모드
+npm test -- --watch
+
+# 커버리지
+npm test -- --coverage
+```
+
+## 테스트 작성 체크리스트
+
+- [ ] 정상 케이스 테스트
+- [ ] 엣지 케이스 테스트
+- [ ] 에러 케이스 테스트
+- [ ] 사용자 인터랙션 테스트
+- [ ] 비동기 로직 테스트
