@@ -1,0 +1,53 @@
+# Dependencies (too large for indexing)
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+.vite/
+
+# Test coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Logs
+*.log
+logs/
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files (not needed for code understanding)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Vercel
+.vercel/
+
+# Large generated files
+*.map
+*.min.js
+*.min.css
+
+# Playwright test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Monaco Editor worker files
+monaco-editor-worker.js
+
+# Temporary files
+*.backup
+*.tmp
+
