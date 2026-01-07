@@ -1,3 +1,9 @@
+import Layout from "../components/Layout/Layout";
+
 export default function PatternPage() {
-  return <div>Pattern Detail (TODO)</div>;
+  return (
+    <Layout>
+      <div>Pattern Detail (TODO)</div>
+    </Layout>
+  );
 }
