@@ -1,19 +1,16 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Build outputs
-dist/
-dist-ssr/
+node_modules
+dist
+dist-ssr
 *.local
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
 # Editor directories and files
 .vscode/*
@@ -25,62 +22,3 @@ dist-ssr/
 *.njsproj
 *.sln
 *.sw?
-
-# Testing
-coverage/
-.nyc_output/
-*.lcov
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Vite
-.vite/
-
-# TypeScript
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Vercel
-.vercel
-
-# Turbo
-.turbo
-
-# Playwright
-test-results/
-playwright-report/
-playwright/.cache/
-
-# Monaco Editor worker files (빌드 시 생성)
-monaco-editor-worker.js
-
-# LocalStorage 백업 파일 (개발 중 생성될 수 있음)
-*.backup
-
-# 패턴 데이터 임시 파일
-*.tmp
-
